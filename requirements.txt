@@ -1,0 +1,28 @@
+# Traitement des données
+pandas
+numpy
+scikit-learn
+
+# Visualisation
+matplotlib
+seaborn
+
+# Deep Learning
+tensorflow
+keras
+torch
+
+# API Web
+fastapi
+uvicorn
+
+# Tests
+pytest
+
+# MLOps / DevOps
+python-dotenv
+mlflow
+
+# Outils complémentaires
+jupyter
+notebook
