@@ -1,0 +1,7 @@
+services:
+  - type: web
+    name: fastapi-mlops
+    env: docker
+    plan: free
+    region: frankfurt
+    autoDeploy: true

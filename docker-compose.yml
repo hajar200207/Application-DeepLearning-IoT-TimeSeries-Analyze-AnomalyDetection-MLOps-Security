@@ -1,0 +1,15 @@
+version: "3.8"
+
+services:
+  fastapi:
+    build:
+      context: .
+    container_name: fastapi-app
+    ports:
+      - "8000:8000"
+    volumes:
+      - .:/app
+      - ./mlruns:/mlruns # Montage des artefacts
+    environment:
+      - MLFLOW_TRACKING_URI=file:/mlruns
+    command: uvicorn app.inference_api:app --host 0.0.0.0 --port 8000 --reload

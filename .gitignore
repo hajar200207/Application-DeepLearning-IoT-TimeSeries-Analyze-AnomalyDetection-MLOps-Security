@@ -1,0 +1,10 @@
+mlruns/
+mlflow_downloads/
+results/
+models/
+__pycache__/
+*.log
+*.npy
+*.pt
+*.png
+*.txt
