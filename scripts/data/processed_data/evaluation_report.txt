@@ -1,0 +1,11 @@
+Isolation Forest:
+
+
+ Z-Score:
+              precision    recall  f1-score   support
+
+         0.0       1.00      1.00      1.00     40000
+
+    accuracy                           1.00     40000
+   macro avg       1.00      1.00      1.00     40000
+weighted avg       1.00      1.00      1.00     40000

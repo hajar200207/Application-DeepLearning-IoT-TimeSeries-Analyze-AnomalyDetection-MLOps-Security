@@ -1,0 +1,77 @@
+
+🔍 Évaluation : IsolationForest
+[✅] Accuracy: 0.3336
+[📈] AUC-ROC: 0.3336115785930663
+              precision    recall  f1-score   support
+
+         0.0     0.3336    0.3336    0.3336    222825
+         1.0     0.3336    0.3336    0.3336    222825
+
+    accuracy                         0.3336    445650
+   macro avg     0.3336    0.3336    0.3336    445650
+weighted avg     0.3336    0.3336    0.3336    445650
+
+
+🔍 Évaluation : OneClassSVM
+[✅] Accuracy: 0.3203
+[📈] AUC-ROC: 0.32025580612588356
+              precision    recall  f1-score   support
+
+         0.0     0.3203    0.3202    0.3202    222825
+         1.0     0.3203    0.3203    0.3203    222825
+
+    accuracy                         0.3203    445650
+   macro avg     0.3203    0.3203    0.3203    445650
+weighted avg     0.3203    0.3203    0.3203    445650
+
+
+🔍 Évaluation : LocalOutlierFactor
+[✅] Accuracy: 0.2679
+[📈] AUC-ROC: 0.26785594076068664
+              precision    recall  f1-score   support
+
+         0.0     0.2679    0.2679    0.2679    222825
+         1.0     0.2679    0.2679    0.2679    222825
+
+    accuracy                         0.2679    445650
+   macro avg     0.2679    0.2679    0.2679    445650
+weighted avg     0.2679    0.2679    0.2679    445650
+
+
+🔍 Évaluation : DBSCAN
+[✅] Accuracy: 0.4808
+[📈] AUC-ROC: 0.48079883316503985
+              precision    recall  f1-score   support
+
+         0.0     0.0000    0.0000    0.0000    222825
+         1.0     0.4902    0.9616    0.6494    222825
+
+    accuracy                         0.4808    445650
+   macro avg     0.2451    0.4808    0.3247    445650
+weighted avg     0.2451    0.4808    0.3247    445650
+
+
+🔍 Évaluation : PCA
+[✅] Accuracy: 0.4932
+[📈] AUC-ROC: 0.4931583080893077
+              precision    recall  f1-score   support
+
+         0.0     0.4931    0.4919    0.4925    222825
+         1.0     0.4932    0.4945    0.4938    222825
+
+    accuracy                         0.4932    445650
+   macro avg     0.4932    0.4932    0.4932    445650
+weighted avg     0.4932    0.4932    0.4932    445650
+
+
+🔍 Évaluation : RandomForest
+[✅] Accuracy: 1.0000
+[📈] AUC-ROC: 1.0
+              precision    recall  f1-score   support
+
+         0.0     1.0000    1.0000    1.0000    222825
+         1.0     1.0000    1.0000    1.0000    222825
+
+    accuracy                         1.0000    445650
+   macro avg     1.0000    1.0000    1.0000    445650
+weighted avg     1.0000    1.0000    1.0000    445650

@@ -1,0 +1,76 @@
+🔍 Évaluation : LSTM
+[✅] Accuracy: 0.9816
+[📈] AUC-ROC: 0.9976864343653635
+              precision    recall  f1-score   support
+
+         0     0.9819    0.9813    0.9816    222825
+         1     0.9813    0.9819    0.9816    222825
+
+    accuracy                         0.9816    445650
+   macro avg     0.9816    0.9816    0.9816    445650
+weighted avg     0.9816    0.9816    0.9816    445650
+
+
+🔍 Évaluation : Hybrid CNN+LSTM
+[✅] Accuracy: 0.9795
+[📈] AUC-ROC: 0.998482578238101
+              precision    recall  f1-score   support
+
+         0     0.9962    0.9626    0.9791    222825
+         1     0.9638    0.9964    0.9798    222825
+
+    accuracy                         0.9795    445650
+   macro avg     0.9800    0.9795    0.9795    445650
+weighted avg     0.9800    0.9795    0.9795    445650
+
+
+🔍 Évaluation : GRU
+[✅] Accuracy: 0.9763
+[📈] AUC-ROC: 0.9969893607312816
+              precision    recall  f1-score   support
+
+         0     0.9730    0.9799    0.9764    222825
+         1     0.9797    0.9728    0.9762    222825
+
+    accuracy                         0.9763    445650
+   macro avg     0.9764    0.9763    0.9763    445650
+weighted avg     0.9764    0.9763    0.9763    445650
+
+
+🔍 Évaluation : CNN1D
+[✅] Accuracy: 0.7662
+[📈] AUC-ROC: 0.8692504773464381
+              precision    recall  f1-score   support
+
+         0     0.7960    0.7159    0.7538    222825
+         1     0.7419    0.8166    0.7774    222825
+
+    accuracy                         0.7662    445650
+   macro avg     0.7689    0.7662    0.7656    445650
+weighted avg     0.7689    0.7662    0.7656    445650
+
+
+🔍 Évaluation : Transformer
+[✅] Accuracy: 0.5263
+[📈] AUC-ROC: 0.5239842744697049
+              precision    recall  f1-score   support
+
+         0     0.5183    0.7449    0.6113    222825
+         1     0.5468    0.3078    0.3939    222825
+
+    accuracy                         0.5263    445650
+   macro avg     0.5326    0.5263    0.5026    445650
+weighted avg     0.5326    0.5263    0.5026    445650
+
+
+🔍 Évaluation : Autoencoder
+[✅] Accuracy: 0.5000
+[📈] AUC-ROC: 0.2384149036734156
+              precision    recall  f1-score   support
+
+         0     0.0000    0.0000    0.0000    222825
+         1     0.5000    1.0000    0.6667    222825
+
+    accuracy                         0.5000    445650
+   macro avg     0.2500    0.5000    0.3333    445650
+weighted avg     0.2500    0.5000    0.3333    445650
