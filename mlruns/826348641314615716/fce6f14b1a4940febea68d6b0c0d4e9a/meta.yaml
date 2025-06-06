@@ -1,0 +1,15 @@
+artifact_uri: file:///C:/Users/Lenovo/Desktop/aaa/Application-DeepLearning-IoT-TimeSeries-Analyze-AnomalyDetection-MLOps-Security/mlruns/826348641314615716/fce6f14b1a4940febea68d6b0c0d4e9a/artifacts
+end_time: 1749205687825
+entry_point_name: ''
+experiment_id: '826348641314615716'
+lifecycle_stage: active
+run_id: fce6f14b1a4940febea68d6b0c0d4e9a
+run_name: Figures_Comparatives
+run_uuid: fce6f14b1a4940febea68d6b0c0d4e9a
+source_name: ''
+source_type: 4
+source_version: ''
+start_time: 1749205687005
+status: 3
+tags: []
+user_id: Lenovo
