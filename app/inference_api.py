@@ -131,7 +131,8 @@ def load_model(model_name, input_size, seq_len=30):
         elif model_name == "gru":
             model = GRUModel(input_size)
         elif model_name == "cnn1d":
-            model = CNN1DModel(input_size=input_size)
+            model = CNN1DModel(in_channels=input_size)
+
         elif model_name == "autoencoder":
             model = AutoencoderModel(input_dim=input_size * seq_len)
         elif model_name == "transformer":
@@ -227,6 +228,7 @@ def home():
             <li><a href="/artifact/rapports/resultats_detection_DL_IoT_Modbus.txt" target="_blank">📝 Résultats DL (txt)</a></li>
             <li><a href="/artifact/rapports/traditional_methods_report.txt" target="_blank">📝 Méthodes Traditionnelles (txt)</a></li>
             <li><a href="/artifact/comparatifs/comparatif_global_models.csv" target="_blank">📄 Comparatif Global (CSV)</a></li>
+            <li><a href="/test" target="_blank">🧪 Test en ligne par l'encadrant</a></li>
         </ul>
         <li><a href="http://localhost:5000/#/experiments/697220615460650424" target="_blank">🔬 Voir Expérience MLflow</a></li>
         <li><a href="http://localhost:5000/#/experiments/697220615460650424/runs/2a5dc03aae304d808632bf93033b9bde/model-metrics" target="_blank">📉 Métriques modèle</a></li>
@@ -262,3 +264,155 @@ def download_all():
 # ------------------------------
 # API INFÉRENCE TEMPS RÉEL
 # ------------------------------
+@app.get("/test", response_class=HTMLResponse)
+def test_ui():
+    return """
+    <!DOCTYPE html>
+    <html lang="fr">
+    <head>
+        <meta charset="UTF-8">
+        <title>Tester un modèle DL (IoT Anomaly Detection)</title>
+        <style>
+            body {
+                font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+                background-color: #f5f6fa;
+                margin: 0;
+                padding: 40px;
+                color: #333;
+            }
+
+            .container {
+                max-width: 900px;
+                margin: auto;
+                background-color: #fff;
+                border-radius: 10px;
+                padding: 30px;
+                box-shadow: 0 8px 16px rgba(0, 0, 0, 0.1);
+            }
+
+            h2 {
+                text-align: center;
+                color: #2c3e50;
+                margin-bottom: 20px;
+            }
+
+            label {
+                font-weight: bold;
+                display: block;
+                margin-top: 20px;
+                margin-bottom: 5px;
+            }
+
+            select, textarea, button {
+                width: 100%;
+                padding: 12px;
+                border-radius: 5px;
+                border: 1px solid #ccc;
+                font-size: 14px;
+            }
+
+            textarea {
+                resize: vertical;
+            }
+
+            button {
+                margin-top: 20px;
+                background-color: #3498db;
+                color: white;
+                border: none;
+                cursor: pointer;
+                transition: background-color 0.3s;
+            }
+
+            button:hover {
+                background-color: #2980b9;
+            }
+
+            #result {
+                background-color: #ecf0f1;
+                border-left: 4px solid #3498db;
+                padding: 15px;
+                margin-top: 20px;
+                white-space: pre-wrap;
+                word-break: break-word;
+            }
+        </style>
+    </head>
+    <body>
+        <div class="container">
+            <h2>Test d'inférence en ligne (Détection d'anomalies IoT)</h2>
+            <form id="predictForm">
+                <label for="model">Choisir un modèle :</label>
+                <select id="model">
+                    <option value="lstm">LSTM</option>
+                    <option value="gru">GRU</option>
+                    <option value="cnn1d">CNN1D</option>
+                    <option value="autoencoder">Autoencoder</option>
+                    <option value="transformer">Transformer</option>
+                    <option value="hybrid">Hybrid</option>
+                </select>
+
+                <label for="features">Données (JSON - tableau de vecteurs) :</label>
+                <textarea id="features" rows="10">
+ [
+    [0.1, 0.2, 0.3, 0.4],
+    [0.5, 0.6, 0.7, 0.8],
+    [0.9, 1.0, 1.1, 1.2],
+    [1.3, 1.4, 1.5, 1.6],
+    [1.7, 1.8, 1.9, 2.0],
+    [0.1, 0.2, 0.3, 0.4],
+    [0.5, 0.6, 0.7, 0.8],
+    [0.9, 1.0, 1.1, 1.2],
+    [1.3, 1.4, 1.5, 1.6],
+    [1.7, 1.8, 1.9, 2.0],
+    [0.1, 0.2, 0.3, 0.4],
+    [0.5, 0.6, 0.7, 0.8],
+    [0.9, 1.0, 1.1, 1.2],
+    [1.3, 1.4, 1.5, 1.6],
+    [1.7, 1.8, 1.9, 2.0],
+    [0.1, 0.2, 0.3, 0.4],
+    [0.5, 0.6, 0.7, 0.8],
+    [0.9, 1.0, 1.1, 1.2],
+    [1.3, 1.4, 1.5, 1.6],
+    [1.7, 1.8, 1.9, 2.0],
+    [0.1, 0.2, 0.3, 0.4],
+    [0.5, 0.6, 0.7, 0.8],
+    [0.9, 1.0, 1.1, 1.2],
+    [1.3, 1.4, 1.5, 1.6],
+    [1.7, 1.8, 1.9, 2.0],
+    [0.1, 0.2, 0.3, 0.4],
+    [0.5, 0.6, 0.7, 0.8],
+    [0.9, 1.0, 1.1, 1.2],
+    [1.3, 1.4, 1.5, 1.6],
+    [1.7, 1.8, 1.9, 2.0]
+  ]
+
+                </textarea>
+
+                <button type="submit">Lancer la prédiction</button>
+            </form>
+
+            <h3>Résultat :</h3>
+            <pre id="result">En attente de résultat...</pre>
+        </div>
+
+        <script>
+            document.getElementById("predictForm").onsubmit = async (e) => {
+                e.preventDefault();
+                const model = document.getElementById("model").value;
+                const features = JSON.parse(document.getElementById("features").value);
+
+                const response = await fetch(`/predict/${model}`, {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({ features })
+                });
+
+                const data = await response.json();
+                document.getElementById("result").textContent = JSON.stringify(data, null, 2);
+            };
+        </script>
+    </body>
+    </html>
+    """
+
