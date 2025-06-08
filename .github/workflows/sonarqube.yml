@@ -33,11 +33,10 @@ jobs:
       - name: Run SonarCloud Scan
         uses: SonarSource/sonarcloud-github-action@v2
         env:
-            SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
+          SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
         with:
-            args: >
-              -Dsonar.projectKey=hajar200207_Application-DeepLearning-IoT-TimeSeries-Analyze-AnomalyDetection-MLOps-Security
-              -Dsonar.organization=Application-DeepLearning-IoT-TimeSeries-Analyze-AnomalyDetection-MLOps-Security
-              -Dsonar.sources=app,scripts,src
-              -Dsonar.python.version=3.10
-  
+          args: >
+            -Dsonar.projectKey=hajar200207_Application-DeepLearning-IoT-TimeSeries-Analyze-AnomalyDetection-MLOps-Security
+            -Dsonar.organization=hajar200207
+            -Dsonar.sources=app,scripts,src
+            -Dsonar.python.version=3.10
