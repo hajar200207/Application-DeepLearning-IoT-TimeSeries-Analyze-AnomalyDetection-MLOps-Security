@@ -36,6 +36,6 @@ jobs:
           SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
         with:
           args: >
-            -Dsonar.projectKey=Application-DeepLearning-IoT-TimeSeries-Analyze-AnomalyDetection-MLOps-Security
-            -Dsonar.organization=hajar200207
+            -Dsonar.projectKey=hajar200207_Application-DeepLearning-IoT-TimeSeries-Analyze-AnomalyDetection-MLOps-Security
+            -Dsonar.organization=Application-DeepLearning-IoT-TimeSeries-Analyze-AnomalyDetection-MLOps-Security
             -Dsonar.python.version=3.10
