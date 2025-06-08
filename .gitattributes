@@ -3,3 +3,4 @@
 *.h5 filter=lfs diff=lfs merge=lfs -text
 *.log filter=lfs diff=lfs merge=lfs -text
 configs/service_account.json
+.dvc/configs/service_account.json
