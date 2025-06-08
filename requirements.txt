@@ -31,3 +31,6 @@ uvicorn
 mlflow
 prometheus-fastapi-instrumentator
 torch==2.1.0
+
+pytest
+
