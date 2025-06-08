@@ -1,4 +1,4 @@
-name: SonarQube Analysis
+name: SonarQube Local Analysis
 
 on:
   push:
@@ -7,8 +7,8 @@ on:
     branches: ["main"]
 
 jobs:
-  sonarcloud:
-    name: Analyze with SonarQube
+  sonar:
+    name: Run SonarQube Analysis
     runs-on: ubuntu-latest
 
     steps:
@@ -31,10 +31,6 @@ jobs:
       - name: Run SonarQube Scanner
         env:
           SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
-          SONAR_HOST_URL: ${{ secrets.SONAR_HOST_URL }}
         run: |
           sonar-scanner \
-            -Dsonar.projectKey=Application-DeepLearning-IoT-TimeSeries-Analyze-AnomalyDetection-MLOps-Security \
-            -Dsonar.sources=. \
-            -Dsonar.host.url=$SONAR_HOST_URL \
             -Dsonar.login=$SONAR_TOKEN
