@@ -11,3 +11,4 @@ __pycache__/
 /models
 /mlflow_downloads
 /mlruns
+.dvc/configs/service_account.json
