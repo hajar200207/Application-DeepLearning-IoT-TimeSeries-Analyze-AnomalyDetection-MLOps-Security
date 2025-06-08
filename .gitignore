@@ -8,3 +8,6 @@ __pycache__/
 *.pt
 
 
+/models
+/mlflow_downloads
+/mlruns

@@ -6,8 +6,18 @@ import torch.nn as nn
 import numpy as np
 import os
 import zipfile
+from prometheus_client import start_http_server, Summary, Counter
+import time
+from prometheus_fastapi_instrumentator import Instrumentator
+from fastapi import FastAPI
+from fastapi import Request
 
 app = FastAPI()
+
+# Initialiser Prometheus après l’instanciation de app
+instrumentator = Instrumentator()
+instrumentator.instrument(app).expose(app)
+
 
 # ------------------------------
 # CONFIGURATION
@@ -416,3 +426,19 @@ def test_ui():
     </html>
     """
 
+
+
+REQUEST_TIME = Summary('request_processing_seconds', 'Time spent processing request')
+REQUEST_COUNTER = Counter('http_requests_total', 'Total HTTP Requests')
+
+@app.middleware("http")
+async def metrics_middleware(request: Request, call_next):
+    REQUEST_COUNTER.inc()
+    start = time.time()
+    response = await call_next(request)
+    duration = time.time() - start
+    REQUEST_TIME.observe(duration)
+    return response
+
+# démarrer serveur Prometheus (en plus d'uvicorn)
+start_http_server(8001)

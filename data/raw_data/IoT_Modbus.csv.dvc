@@ -1,5 +1,3 @@
-outs:
-- md5: 369e0c11bf65471b447ec58a0c41e1da
-  size: 15347014
-  hash: md5
-  path: IoT_Modbus.csv
+version https://git-lfs.github.com/spec/v1
+oid sha256:d4974aa5019697adc55933a286149746d4d74394a090ec5d40eaefb1ffcacb30
+size 103
