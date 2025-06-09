@@ -213,7 +213,6 @@ def predict(model_name: str, data: InputData):
         # === Cas général : classification (score softmax) ===
         score = torch.softmax(output, dim=1)[0, 1].item()
         prediction = "anomalie" if score > 0.5 else "normal"
-
         # === Partie IOC ===
         ioc_path = os.path.join("configs", "ioc.json")
         try:
