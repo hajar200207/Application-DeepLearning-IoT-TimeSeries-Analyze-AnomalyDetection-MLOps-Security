@@ -39,7 +39,15 @@ AVAILABLE_MODELS = {
 # INPUT DATA FORMAT
 # ------------------------------
 class InputData(BaseModel):
-    features: list[list[float]]  # (T, input_size)
+    features: list[list[float]]
+
+    class Config:
+        arbitrary_types_allowed = True
+        json_encoders = {
+            np.float32: lambda v: float(v)
+        }
+
+# (T, input_size)
 
 # ------------------------------
 # MODEL DEFINITIONS
@@ -164,45 +172,82 @@ def load_model(model_name, input_size, seq_len=30):
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Erreur de chargement du modèle : {e}")
 
-
 # === ROUTE PREDICT ===
 @app.post("/predict/{model_name}")
 def predict(model_name: str, data: InputData):
+    import json
+    from datetime import datetime
+
     model_name = model_name.lower()
     if model_name not in AVAILABLE_MODELS:
         raise HTTPException(status_code=400, detail="Unsupported model")
 
     try:
-        x_np = np.array(data.features, dtype=np.float32)
+        # Conversion stricte en float32
+        x_np = np.array(data.features).astype(np.float32)
         if len(x_np.shape) != 2:
-            raise ValueError("Format des données invalide")
+            raise ValueError("Format des données invalide : attendu [T, input_size]")
+        
         input_size = x_np.shape[1]
         seq_len = x_np.shape[0]
-        x_tensor = torch.tensor(x_np).unsqueeze(0)
+        x_tensor = torch.tensor(x_np).unsqueeze(0)  # Ajoute batch dimension
     except Exception as e:
-        raise HTTPException(status_code=400, detail=str(e))
+        raise HTTPException(status_code=400, detail=f"Erreur de traitement des données : {str(e)}")
 
     model = load_model(model_name, input_size, seq_len)
+    model.eval()
 
     with torch.no_grad():
         output = model(x_tensor)
+
+        # === Cas spécial autoencoder ===
         if model_name == "autoencoder":
             reconstruction_error = torch.mean((output - x_tensor.view(output.size())) ** 2).item()
             prediction = "anomalie" if reconstruction_error > 0.05 else "normal"
             return {
                 "model": model_name,
                 "prediction": prediction,
-                "reconstruction_error": round(reconstruction_error, 5)
+                "reconstruction_error": round(float(reconstruction_error), 5)
             }
-        
-        else:
-            score = torch.softmax(output, dim=1)[0, 1].item()
-            prediction = "anomalie" if score > 0.5 else "normal"
-            return {
-                "model": model_name,
-                "prediction": prediction,
-                "score": round(score, 3)
-            }
+
+        # === Cas général : classification (score softmax) ===
+        score = torch.softmax(output, dim=1)[0, 1].item()
+        prediction = "anomalie" if score > 0.5 else "normal"
+
+        # === Partie IOC ===
+        ioc_path = os.path.join("configs", "ioc.json")
+        try:
+            with open(ioc_path, "r", encoding="utf-8") as f:
+                ioc_data = json.load(f)
+        except:
+            ioc_data = {}
+
+        model_threat_map = {
+            "lstm": "DoS",
+            "cnn1d": "Scan",
+            "gru": "Injection",
+            "hybrid": "Accès non autorisé"
+        }
+        threat = model_threat_map.get(model_name, "Inconnu")
+        ioc = ioc_data.get(threat, {"risk": "Inconnu", "recommendation": "N/A"})
+
+        # === Log uniquement en cas d'anomalie détectée ===
+        if prediction == "anomalie":
+            os.makedirs("logs", exist_ok=True)
+            with open("logs/alerts.csv", "a") as f:
+                f.write(f"{datetime.now()},{model_name},{prediction},{score:.3f},{threat},{ioc['risk']},{ioc['recommendation']}\n")
+
+        # === Résultat final (avec float pur) ===
+        return {
+            "model": model_name,
+            "prediction": prediction,
+            "score": round(float(score), 3),
+            "threat_type": threat,
+            "risk": ioc["risk"],
+            "recommendation": ioc["recommendation"]
+        }
+
+
 # ------------------------------
 # PAGE HTML PRINCIPALE
 # ------------------------------
@@ -346,6 +391,11 @@ def test_ui():
                 white-space: pre-wrap;
                 word-break: break-word;
             }
+            ul li {
+    display: inline-block;
+    margin-right: 10px;
+}
+
         </style>
     </head>
     <body>
@@ -399,7 +449,13 @@ def test_ui():
 
                 </textarea>
 
-                <button type="submit">Lancer la prédiction</button>
+               <ul>
+  <li><button type="submit">🚀 Lancer la prédiction</button></li>
+  <li><button type="button" onclick="loadSampleData()">📥 Charger exemple dataset</button></li>
+  <li><button type="button" onclick="window.location.href='/alerts'">📜 Voir alertes</button></li>
+</ul>
+
+
             </form>
 
             <h3>Résultat :</h3>
@@ -410,7 +466,13 @@ def test_ui():
             document.getElementById("predictForm").onsubmit = async (e) => {
                 e.preventDefault();
                 const model = document.getElementById("model").value;
-                const features = JSON.parse(document.getElementById("features").value);
+let features;
+try {
+    features = JSON.parse(document.getElementById("features").value);
+} catch (err) {
+    document.getElementById("result").textContent = "❌ Erreur de parsing JSON : " + err.message;
+    return;
+}
 
                 const response = await fetch(`/predict/${model}`, {
                     method: "POST",
@@ -421,11 +483,96 @@ def test_ui():
                 const data = await response.json();
                 document.getElementById("result").textContent = JSON.stringify(data, null, 2);
             };
+            function loadSampleData() {
+    // Exemple de données simulées : 30 étapes temporelles, 4 capteurs
+    const sample = [];
+    for (let i = 0; i < 30; i++) {
+        sample.push([
+            Math.sin(i * 0.2),
+            Math.cos(i * 0.2),
+            0.5 + Math.random() * 0.1,
+            1.0 + Math.random() * 0.1
+        ]);
+    }
+    document.getElementById("features").value = JSON.stringify(sample, null, 2);
+}
+
         </script>
     </body>
     </html>
     """
 
+@app.get("/alerts", response_class=HTMLResponse)
+def show_alerts():
+    import csv
+    from datetime import datetime
+
+    alerts_path = "logs/alerts.csv"
+    alerts_html = ""
+
+    if not os.path.exists(alerts_path):
+        alerts_html = "<p>Aucune alerte enregistrée pour le moment.</p>"
+    else:
+        with open(alerts_path, "r") as f:
+            reader = csv.reader(f)
+            next(reader)  # Skip header
+            rows = list(reader)[-20:]  # Show last 20 alerts
+
+        for row in rows[::-1]:  # reverse pour latest en haut
+            timestamp, model, prediction, score, threat, risk, recommendation = row
+            date_formatted = datetime.strptime(timestamp[:19], "%Y-%m-%d %H:%M:%S").strftime("%d-%m-%Y %H:%M")
+            alerts_html += f"""
+            <li>📌 [{date_formatted}] Modèle: <strong>{model.upper()}</strong> | ⚠️ <strong>{threat}</strong> |
+            🔥 Score: <code>{score}</code> | 🚨 Risque: <strong>{risk}</strong> | ✔️ Action: <em>{recommendation}</em></li>
+            """
+
+    return f"""
+    <!DOCTYPE html>
+    <html lang="fr">
+    <head>
+        <meta charset="UTF-8">
+        <title>Alertes de sécurité IoT</title>
+        <style>
+            body {{
+                font-family: 'Segoe UI', Tahoma, sans-serif;
+                background-color: #f9f9f9;
+                padding: 30px;
+                color: #333;
+            }}
+            h2 {{
+                text-align: center;
+                color: #c0392b;
+            }}
+            ul {{
+                list-style: none;
+                padding: 0;
+            }}
+            li {{
+                background: #fff;
+                margin-bottom: 15px;
+                padding: 15px;
+                border-left: 6px solid #e74c3c;
+                box-shadow: 0 2px 6px rgba(0,0,0,0.05);
+                border-radius: 6px;
+            }}
+            code {{
+                background: #eee;
+                padding: 2px 5px;
+                border-radius: 4px;
+            }}
+            em {{
+                color: #2c3e50;
+            }}
+        </style>
+    </head>
+    <body>
+        <h2>🔐 Journal des Alertes Détection Anomalies IoT</h2>
+        <ul>
+            {alerts_html}
+        </ul>
+    </body>
+    </html>
+    """
 
 
 REQUEST_TIME = Summary('request_processing_seconds', 'Time spent processing request')

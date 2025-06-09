@@ -1,0 +1,12 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: fastapi-service
+spec:
+  selector:
+    app: fastapi  # doit correspondre au label dans le Deployment
+  ports:
+    - protocol: TCP
+      port: 80         # Port exposé par le service (externe)
+      targetPort: 8000 # Port sur lequel tourne l'app dans le conteneur
+  type: NodePort       # Pour accéder à l'app via http://localhost:<nodePort>

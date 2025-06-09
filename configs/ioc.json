@@ -1,0 +1,39 @@
+{
+    "DoS": {
+        "description": "Déni de service. Tentatives de surcharger un réseau ou service.",
+        "symptoms": [
+            "Trafic réseau élevé",
+            "Timeouts",
+            "CPU overload"
+        ],
+        "risk": "Critique",
+        "recommendation": "Bloquer l'adresse IP source"
+    },
+    "Scan": {
+        "description": "Scan de ports pour détecter les services ouverts",
+        "symptoms": [
+            "Accès à plusieurs ports",
+            "Taux élevé d’erreurs"
+        ],
+        "risk": "Élevé",
+        "recommendation": "Surveiller et limiter l'accès"
+    },
+    "Injection": {
+        "description": "Tentative d'injecter du code malveillant",
+        "symptoms": [
+            "Commandes anormales",
+            "Écriture dans registres sensibles"
+        ],
+        "risk": "Élevé",
+        "recommendation": "Filtrage d’entrées et validation"
+    },
+    "Accès non autorisé": {
+        "description": "Connexion sans authentification",
+        "symptoms": [
+            "Tentatives de login",
+            "Accès suspect"
+        ],
+        "risk": "Moyen",
+        "recommendation": "Activer MFA, bloquer l’IP"
+    }
+}
