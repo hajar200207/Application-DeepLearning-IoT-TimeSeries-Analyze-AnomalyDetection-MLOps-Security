@@ -1,3 +1,9 @@
+"""
+FastAPI app for IoT anomaly detection using multiple deep learning models.
+Author: Ouadi Hajar
+Encadrant: Pr. Biniz
+Date: 2025
+"""
 from fastapi import FastAPI, HTTPException
 from fastapi.responses import FileResponse, HTMLResponse
 from pydantic import BaseModel
@@ -5,6 +11,7 @@ import torch
 import torch.nn as nn
 import numpy as np
 import os
+import logging
 import zipfile
 from prometheus_client import start_http_server, Summary, Counter
 import time
@@ -13,6 +20,7 @@ from fastapi import FastAPI
 from fastapi import Request
 
 app = FastAPI()
+logger = logging.getLogger(__name__)
 
 # Initialiser Prometheus après l’instanciation de app
 instrumentator = Instrumentator()
@@ -23,26 +31,18 @@ from fastapi.responses import RedirectResponse
 MLFLOW_PORT = 5000          # si tu gardes MLflow sur 5000
 MLFLOW_PATH = "/"           # ou "/#/experiments/…"
 
-import re
-
 @app.get("/mlflow")
 def mlflow_redirect(request: Request):
     """
-    Redirige vers MLflow via Ngrok avec validation de sécurité.
+    Redirige automatiquement vers le tunnel Ngrok qui sert MLflow,
+    quel que soit le sous-domaine attribué au prochain démarrage.
     """
-    host = request.headers.get("host", "")
-    
-    # ✅ Sécurisation : autoriser seulement certains formats
-    match = re.match(r"^([\w\-]+)-(\d+)-(\d+)-(\d+)-(\d+)\.ngrok-free\.app$", host)
-    if not match:
-        raise HTTPException(status_code=400, detail="Host non autorisé")
-
-    # Extraction et remplacement contrôlé
-    mlflow_host = host.replace("3856", "49d4")  # ou extraire dynamiquement
-
+    host = request.headers.get("host")          # ex.  abcd-196-200-159-146.ngrok-free.app
+    base = host.split(".")[0]                   # abcd-196-200-159-146
+    # On remplace seulement le 1er sous-domaine par celui du tunnel MLflow
+    mlflow_host = base.replace("3856", "49d4")  # <- à automatiser, voir plus bas
     url = f"https://{mlflow_host}.ngrok-free.app{MLFLOW_PATH}"
     return RedirectResponse(url, status_code=307)
-
 
 # ------------------------------
 # CONFIGURATION
