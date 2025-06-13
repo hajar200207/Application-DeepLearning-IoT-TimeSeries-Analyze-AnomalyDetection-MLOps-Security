@@ -47,8 +47,7 @@ class InputData(BaseModel):
         arbitrary_types_allowed = True
         json_encoders = {np.float32: lambda v: float(v)}
 
-# === Chargement sécurisé des modèles via TorchScript ===
-# === Chargement sécurisé des modèles via TorchScript ===
+# === Chargement sécurisé via TorchScript ===
 def load_model(model_name: str):
     path = os.path.join("models", AVAILABLE_MODELS[model_name])
     if not os.path.exists(path):
@@ -60,8 +59,6 @@ def load_model(model_name: str):
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Erreur de chargement JIT : {e}")
 
-
-# === Endpoint de prédiction ===
 # === Endpoint de prédiction ===
 @app.post("/predict/{model_name}")
 def predict(model_name: str, data: InputData):
@@ -76,25 +73,36 @@ def predict(model_name: str, data: InputData):
     except Exception as e:
         raise HTTPException(status_code=400, detail=str(e))
 
-    # ✅ appel correct à load_model()
     model = load_model(model_name)
-
     with torch.no_grad():
         output = model(x_tensor)
-        ...
-
+        score = torch.softmax(output, dim=1)[0, 1].item()
+        prediction = "anomalie" if score > 0.5 else "normal"
+        return {
+            "model": model_name,
+            "prediction": prediction,
+            "score": round(score, 3)
+        }
 
 @app.get("/", response_class=HTMLResponse)
 def home():
     return "<html><body><h1>Inference API IoT</h1></body></html>"
 
+# === Endpoint sécurisé pour récupérer un fichier d’artefact ===
 @app.get("/artifact/{folder}/{filename}")
 def get_artifact(folder: str, filename: str):
-    path = os.path.join(ARTIFACT_BASE, folder, filename)
+    if ".." in folder or ".." in filename or "/" in folder or "/" in filename:
+        raise HTTPException(status_code=400, detail="Nom de fichier ou dossier invalide")
+
+    safe_folder = os.path.basename(folder)
+    safe_filename = os.path.basename(filename)
+    path = os.path.join(ARTIFACT_BASE, safe_folder, safe_filename)
+
     if not os.path.isfile(path):
-        return {"error": f"Fichier non trouvé : {path}"}
+        return {"error": f"Fichier non trouvé : {safe_filename}"}
     return FileResponse(path)
 
+# === Endpoint de téléchargement complet des artefacts ===
 @app.get("/download/all")
 def download_all():
     zip_filename = "all_results.zip"
