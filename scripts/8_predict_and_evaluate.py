@@ -1,7 +1,7 @@
 import sys
 import os
 
-# ✅ Ajouter le dossier parent au chemin Python pour accéder à src/
+# ✅ Ajouter le dossier parent au chemin Python
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
 
 import numpy as np
@@ -9,7 +9,7 @@ import torch
 from sklearn.metrics import classification_report, confusion_matrix
 import matplotlib.pyplot as plt
 import seaborn as sns
-from src.models.lstm_model import LSTMModel  # ✅ importer après ajout du chemin
+from src.models.lstm_model import LSTMModel
 
 # 📁 Corriger les chemins relatifs
 model_path = os.path.join("..", "models", "LSTM.pt")
@@ -22,7 +22,10 @@ y_true = np.load(y_path)
 
 # 🔁 Recréer le modèle
 model = LSTMModel(input_size=X.shape[2], hidden_size=64, num_layers=1)
-model.load_state_dict(torch.load(model_path))
+
+# ✅ Chargement sécurisé des poids
+state_dict = torch.load(model_path, map_location=torch.device("cpu"))
+model.load_state_dict(state_dict)
 model.eval()
 
 # 🔄 Conversion en tenseur
