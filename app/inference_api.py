@@ -48,7 +48,8 @@ class InputData(BaseModel):
         json_encoders = {np.float32: lambda v: float(v)}
 
 # === Chargement sécurisé des modèles via TorchScript ===
-def load_model(model_name, input_size, seq_len=30):
+# === Chargement sécurisé des modèles via TorchScript ===
+def load_model(model_name: str):
     path = os.path.join("models", AVAILABLE_MODELS[model_name])
     if not os.path.exists(path):
         raise HTTPException(status_code=404, detail="Model not found")
@@ -58,6 +59,7 @@ def load_model(model_name, input_size, seq_len=30):
         return model
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Erreur de chargement JIT : {e}")
+
 
 # === Endpoint de prédiction ===
 @app.post("/predict/{model_name}")
