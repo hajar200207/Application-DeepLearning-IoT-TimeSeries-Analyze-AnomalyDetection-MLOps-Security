@@ -11,6 +11,7 @@ import torch
 import torch.nn as nn
 import numpy as np
 import os
+import io
 import logging
 import zipfile
 from prometheus_client import start_http_server, Summary, Counter
@@ -189,10 +190,17 @@ def load_model(model_name, input_size, seq_len=30):
         else:
             raise HTTPException(status_code=400, detail="Unsupported model")
 
-        state_dict = torch.load(path, map_location=torch.device("cpu"))
-        model.load_state_dict(state_dict)
-        model.eval()
-        return model
+        # Chargement sécurisé du fichier modèle
+        try:
+            with open(path, 'rb') as f:
+                buffer = f.read()
+            state_dict = torch.load(io.BytesIO(buffer), map_location=torch.device("cpu"))
+            model.load_state_dict(state_dict)
+            model.eval()
+            return model
+        except Exception as e:
+            raise HTTPException(status_code=500, detail=f"Erreur de chargement sécurisé du modèle : {e}")
+
 
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Erreur de chargement du modèle : {e}")
