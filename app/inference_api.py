@@ -2,7 +2,6 @@ from fastapi import FastAPI, HTTPException, Request
 from fastapi.responses import FileResponse, HTMLResponse, RedirectResponse
 from pydantic import BaseModel
 import torch
-import torch.nn as nn
 import numpy as np
 import os
 import zipfile
@@ -13,7 +12,6 @@ from datetime import datetime
 from prometheus_fastapi_instrumentator import Instrumentator
 
 app = FastAPI()
-
 instrumentator = Instrumentator()
 instrumentator.instrument(app).expose(app)
 
@@ -35,12 +33,12 @@ EXPERIMENT_ID = "793373518782300742"
 ARTIFACT_BASE = os.path.join("mlruns", EXPERIMENT_ID, RUN_ID, "artifacts")
 
 AVAILABLE_MODELS = {
-    "lstm": "LSTM.pt",
-    "gru": "GRU.pt",
-    "cnn1d": "CNN1D.pt",
-    "autoencoder": "Autoencoder.pt",
-    "transformer": "Transformer.pt",
-    "hybrid": "Hybrid.pt"
+    "lstm": "LSTM_jit.pt",
+    "gru": "GRU_jit.pt",
+    "cnn1d": "CNN1D_jit.pt",
+    "autoencoder": "Autoencoder_jit.pt",
+    "transformer": "Transformer_jit.pt",
+    "hybrid": "Hybrid_jit.pt"
 }
 
 class InputData(BaseModel):
@@ -49,128 +47,19 @@ class InputData(BaseModel):
         arbitrary_types_allowed = True
         json_encoders = {np.float32: lambda v: float(v)}
 
-# === Définition des modèles Deep Learning ===
-
-class LSTMModel(nn.Module):
-    def __init__(self, input_size, hidden_size=64, num_layers=1):
-        super().__init__()
-        self.lstm = nn.LSTM(input_size, hidden_size, num_layers, batch_first=True)
-        self.fc = nn.Linear(hidden_size, 2)
-    def forward(self, x):
-        _, (h_n, _) = self.lstm(x)
-        return self.fc(h_n[-1])
-
-class GRUModel(nn.Module):
-    def __init__(self, input_size, hidden_size=64, num_layers=1):
-        super().__init__()
-        self.gru = nn.GRU(input_size, hidden_size, num_layers, batch_first=True)
-        self.fc = nn.Linear(hidden_size, 2)
-    def forward(self, x):
-        _, h_n = self.gru(x)
-        return self.fc(h_n[-1])
-
-class CNN1DModel(nn.Module):
-    def __init__(self, in_channels):
-        super().__init__()
-        self.net = nn.Sequential(
-            nn.Conv1d(in_channels, 64, kernel_size=3),
-            nn.ReLU(),
-            nn.AdaptiveAvgPool1d(1),
-            nn.Flatten(),
-            nn.Linear(64, 2)
-        )
-    def forward(self, x):
-        x = x.permute(0, 2, 1)
-        return self.net(x)
-
-class AutoencoderModel(nn.Module):
-    def __init__(self, input_dim):
-        super().__init__()
-        self.encoder = nn.Sequential(
-            nn.Flatten(),
-            nn.Linear(input_dim, 64),
-            nn.ReLU(),
-            nn.Linear(64, 32)
-        )
-        self.decoder = nn.Sequential(
-            nn.Linear(32, 64),
-            nn.ReLU(),
-            nn.Linear(64, input_dim),
-            nn.Sigmoid()
-        )
-    def forward(self, x):
-        encoded = self.encoder(x)
-        decoded = self.decoder(encoded)
-        return decoded.view(x.size())
-
-class SimpleTransformer(nn.Module):
-    def __init__(self, input_size, seq_len=30, num_heads=4, num_layers=2, dim_feedforward=2048, num_classes=2):
-        super().__init__()
-        encoder_layer = nn.TransformerEncoderLayer(
-            d_model=input_size, nhead=num_heads, dim_feedforward=dim_feedforward, batch_first=True
-        )
-        self.transformer = nn.TransformerEncoder(encoder_layer, num_layers=num_layers)
-        self.classifier = nn.Linear(seq_len * input_size, num_classes)
-    def forward(self, x):
-        x = self.transformer(x)
-        return self.classifier(x.view(x.size(0), -1))
-
-class HybridModel(nn.Module):
-    def __init__(self, input_size):
-        super().__init__()
-        self.conv1 = nn.Conv1d(in_channels=input_size, out_channels=32, kernel_size=3)
-        self.lstm = nn.LSTM(input_size=32, hidden_size=64, batch_first=True)
-        self.fc = nn.Linear(64, 2)
-    def forward(self, x):
-        x = x.permute(0, 2, 1)
-        x = self.conv1(x)
-        x = x.permute(0, 2, 1)
-        _, (h, _) = self.lstm(x)
-        return self.fc(h[-1])
-
-# === Chargement sécurisé du modèle ===
-
+# === Chargement sécurisé des modèles via TorchScript ===
 def load_model(model_name, input_size, seq_len=30):
     path = os.path.join("models", AVAILABLE_MODELS[model_name])
     if not os.path.exists(path):
         raise HTTPException(status_code=404, detail="Model not found")
     try:
-        if model_name == "lstm":
-            model = LSTMModel(input_size)
-        elif model_name == "gru":
-            model = GRUModel(input_size)
-        elif model_name == "cnn1d":
-            model = CNN1DModel(in_channels=input_size)
-        elif model_name == "autoencoder":
-            model = AutoencoderModel(input_dim=input_size * seq_len)
-        elif model_name == "transformer":
-            if input_size % 4 != 0:
-                raise HTTPException(status_code=500, detail="embed_dim doit être multiple de 4")
-            model = SimpleTransformer(input_size=input_size, seq_len=seq_len)
-        elif model_name == "hybrid":
-            model = HybridModel(input_size=input_size)
-        else:
-            raise HTTPException(status_code=400, detail="Unsupported model")
-
-        with open(path, 'rb') as f:
-            buffer = f.read()
-
-        # 🔐 Chargement sécurisé :
-        # torch.load est justifié ici car les fichiers .pt sont générés localement via MLflow
-        # Aucun fichier externe ou non vérifié ne peut être injecté
-        # Ce hotspot est considéré comme maîtrisé ✔
-        state_dict = torch.load(io.BytesIO(buffer), map_location=torch.device("cpu"))  # nosec B301
-
-        model.load_state_dict(state_dict)
+        model = torch.jit.load(path, map_location=torch.device("cpu"))
         model.eval()
         return model
-
     except Exception as e:
-        raise HTTPException(status_code=500, detail=f"Erreur de chargement sécurisé du modèle : {e}")
-
+        raise HTTPException(status_code=500, detail=f"Erreur de chargement JIT : {e}")
 
 # === Endpoint de prédiction ===
-
 @app.post("/predict/{model_name}")
 def predict(model_name: str, data: InputData):
     model_name = model_name.lower()
@@ -189,15 +78,19 @@ def predict(model_name: str, data: InputData):
     model = load_model(model_name, input_size, seq_len)
     with torch.no_grad():
         output = model(x_tensor)
-
         if model_name == "autoencoder":
             error = torch.mean((output - x_tensor.view(output.size())) ** 2).item()
             prediction = "anomalie" if error > 0.05 else "normal"
-            return {"model": model_name, "prediction": prediction, "reconstruction_error": round(error, 5)}
+            return {
+                "model": model_name,
+                "prediction": prediction,
+                "reconstruction_error": round(error, 5)
+            }
 
         score = torch.softmax(output, dim=1)[0, 1].item()
         prediction = "anomalie" if score > 0.5 else "normal"
 
+        # Threat info
         ioc_path = os.path.join("configs", "ioc.json")
         try:
             with open(ioc_path, "r", encoding="utf-8") as f:
@@ -214,6 +107,7 @@ def predict(model_name: str, data: InputData):
         threat = model_threat_map.get(model_name, "Inconnu")
         ioc = ioc_data.get(threat, {"risk": "Inconnu", "recommendation": "N/A"})
 
+        # Log si anomalie
         if prediction == "anomalie":
             os.makedirs("logs", exist_ok=True)
             with open("logs/alerts.csv", "a") as f:
@@ -230,9 +124,7 @@ def predict(model_name: str, data: InputData):
 
 @app.get("/", response_class=HTMLResponse)
 def home():
-    return """
-    <html><body><h1>Inference API IoT</h1></body></html>
-    """
+    return "<html><body><h1>Inference API IoT</h1></body></html>"
 
 @app.get("/artifact/{folder}/{filename}")
 def get_artifact(folder: str, filename: str):
@@ -252,4 +144,3 @@ def download_all():
                 arcname = os.path.relpath(full_path, ARTIFACT_BASE)
                 zipf.write(full_path, arcname)
     return FileResponse(zip_path, filename=zip_filename, media_type="application/zip")
-
