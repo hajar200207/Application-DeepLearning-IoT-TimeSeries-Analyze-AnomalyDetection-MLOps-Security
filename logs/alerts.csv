@@ -4,3 +4,8 @@
 2025-06-09 11:00:41.467197,cnn1d,anomalie,0.932,Scan,Élevé,Surveiller et limiter l'accès
 2025-06-09 11:01:00.675590,transformer,anomalie,0.616,Inconnu,Inconnu,N/A
 2025-06-09 12:21:37.709730,lstm,anomalie,0.814,DoS,Critique,Bloquer l'adresse IP source
+2025-06-10 14:14:14.324284,lstm,anomalie,0.814,DoS,Critique,Bloquer l'adresse IP source
+2025-06-10 14:15:24.653323,lstm,anomalie,0.903,DoS,Critique,Bloquer l'adresse IP source
+2025-06-10 14:15:28.110931,transformer,anomalie,0.617,Inconnu,Inconnu,N/A
+2025-06-12 09:40:31.283205,lstm,anomalie,0.814,DoS,Critique,Bloquer l'adresse IP source
+2025-06-12 09:44:26.713638,lstm,anomalie,0.814,DoS,Critique,Bloquer l'adresse IP source

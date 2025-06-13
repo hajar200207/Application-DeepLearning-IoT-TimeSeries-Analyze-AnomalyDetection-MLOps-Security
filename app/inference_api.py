@@ -18,6 +18,23 @@ app = FastAPI()
 instrumentator = Instrumentator()
 instrumentator.instrument(app).expose(app)
 
+from fastapi.responses import RedirectResponse
+
+MLFLOW_PORT = 5000          # si tu gardes MLflow sur 5000
+MLFLOW_PATH = "/"           # ou "/#/experiments/…"
+
+@app.get("/mlflow")
+def mlflow_redirect(request: Request):
+    """
+    Redirige automatiquement vers le tunnel Ngrok qui sert MLflow,
+    quel que soit le sous-domaine attribué au prochain démarrage.
+    """
+    host = request.headers.get("host")          # ex.  abcd-196-200-159-146.ngrok-free.app
+    base = host.split(".")[0]                   # abcd-196-200-159-146
+    # On remplace seulement le 1er sous-domaine par celui du tunnel MLflow
+    mlflow_host = base.replace("3856", "49d4")  # <- à automatiser, voir plus bas
+    url = f"https://{mlflow_host}.ngrok-free.app{MLFLOW_PATH}"
+    return RedirectResponse(url, status_code=307)
 
 # ------------------------------
 # CONFIGURATION
@@ -284,8 +301,9 @@ def home():
             <li><a href="/artifact/comparatifs/comparatif_global_models.csv" target="_blank">📄 Comparatif Global (CSV)</a></li>
             <li><a href="/test" target="_blank">🧪 Test en ligne par l'encadrant</a></li>
         </ul>
-        <li><a href="http://localhost:5000/#/experiments/697220615460650424" target="_blank">🔬 Voir Expérience MLflow</a></li>
-        <li><a href="http://localhost:5000/#/experiments/697220615460650424/runs/2a5dc03aae304d808632bf93033b9bde/model-metrics" target="_blank">📉 Métriques modèle</a></li>
+        <li><a href="/mlflow" target="_blank">🔬 Voir MLflow (auto)</a></li>
+
+        <li><a href="https://49d4-196-200-159-146.ngrok-free.app/#/experiments/697220615460650424/runs/2a5dc03aae304d808632bf93033b9bde/model-metrics" target="_blank">📉 Métriques modèle</a></li>
 
         <a href="/download/all" class="btn">📦 Télécharger tous les résultats (.zip)</a>
         <footer>&copy; 2025 - PFE Ouadi Hajar</footer>
