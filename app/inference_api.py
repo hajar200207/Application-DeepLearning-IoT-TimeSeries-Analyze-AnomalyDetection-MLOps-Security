@@ -23,18 +23,26 @@ from fastapi.responses import RedirectResponse
 MLFLOW_PORT = 5000          # si tu gardes MLflow sur 5000
 MLFLOW_PATH = "/"           # ou "/#/experiments/…"
 
+import re
+
 @app.get("/mlflow")
 def mlflow_redirect(request: Request):
     """
-    Redirige automatiquement vers le tunnel Ngrok qui sert MLflow,
-    quel que soit le sous-domaine attribué au prochain démarrage.
+    Redirige vers MLflow via Ngrok avec validation de sécurité.
     """
-    host = request.headers.get("host")          # ex.  abcd-196-200-159-146.ngrok-free.app
-    base = host.split(".")[0]                   # abcd-196-200-159-146
-    # On remplace seulement le 1er sous-domaine par celui du tunnel MLflow
-    mlflow_host = base.replace("3856", "49d4")  # <- à automatiser, voir plus bas
+    host = request.headers.get("host", "")
+    
+    # ✅ Sécurisation : autoriser seulement certains formats
+    match = re.match(r"^([\w\-]+)-(\d+)-(\d+)-(\d+)-(\d+)\.ngrok-free\.app$", host)
+    if not match:
+        raise HTTPException(status_code=400, detail="Host non autorisé")
+
+    # Extraction et remplacement contrôlé
+    mlflow_host = host.replace("3856", "49d4")  # ou extraire dynamiquement
+
     url = f"https://{mlflow_host}.ngrok-free.app{MLFLOW_PATH}"
     return RedirectResponse(url, status_code=307)
+
 
 # ------------------------------
 # CONFIGURATION
