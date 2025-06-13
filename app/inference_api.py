@@ -62,6 +62,7 @@ def load_model(model_name: str):
 
 
 # === Endpoint de prédiction ===
+# === Endpoint de prédiction ===
 @app.post("/predict/{model_name}")
 def predict(model_name: str, data: InputData):
     model_name = model_name.lower()
@@ -71,58 +72,17 @@ def predict(model_name: str, data: InputData):
         x_np = np.array(data.features).astype(np.float32)
         if len(x_np.shape) != 2:
             raise ValueError("Format invalide")
-        input_size = x_np.shape[1]
-        seq_len = x_np.shape[0]
         x_tensor = torch.tensor(x_np).unsqueeze(0)
     except Exception as e:
         raise HTTPException(status_code=400, detail=str(e))
 
-    model = load_model(model_name, input_size, seq_len)
+    # ✅ appel correct à load_model()
+    model = load_model(model_name)
+
     with torch.no_grad():
         output = model(x_tensor)
-        if model_name == "autoencoder":
-            error = torch.mean((output - x_tensor.view(output.size())) ** 2).item()
-            prediction = "anomalie" if error > 0.05 else "normal"
-            return {
-                "model": model_name,
-                "prediction": prediction,
-                "reconstruction_error": round(error, 5)
-            }
+        ...
 
-        score = torch.softmax(output, dim=1)[0, 1].item()
-        prediction = "anomalie" if score > 0.5 else "normal"
-
-        # Threat info
-        ioc_path = os.path.join("configs", "ioc.json")
-        try:
-            with open(ioc_path, "r", encoding="utf-8") as f:
-                ioc_data = json.load(f)
-        except Exception:
-            ioc_data = {}
-
-        model_threat_map = {
-            "lstm": "DoS",
-            "cnn1d": "Scan",
-            "gru": "Injection",
-            "hybrid": "Accès non autorisé"
-        }
-        threat = model_threat_map.get(model_name, "Inconnu")
-        ioc = ioc_data.get(threat, {"risk": "Inconnu", "recommendation": "N/A"})
-
-        # Log si anomalie
-        if prediction == "anomalie":
-            os.makedirs("logs", exist_ok=True)
-            with open("logs/alerts.csv", "a") as f:
-                f.write(f"{datetime.now()},{model_name},{prediction},{score:.3f},{threat},{ioc['risk']},{ioc['recommendation']}\n")
-
-        return {
-            "model": model_name,
-            "prediction": prediction,
-            "score": round(score, 3),
-            "threat_type": threat,
-            "risk": ioc["risk"],
-            "recommendation": ioc["recommendation"]
-        }
 
 @app.get("/", response_class=HTMLResponse)
 def home():
